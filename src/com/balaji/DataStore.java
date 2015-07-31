@@ -10,30 +10,46 @@ import java.util.TreeMap;
  */
 public class DataStore {
 
-    private TreeMap store = new TreeMap();
+    private TreeMap<String, Integer> store = new TreeMap();
+    private TreeMap<Integer, Integer> valueIndex = new TreeMap();
     private List<Transaction> transactions = new ArrayList<Transaction>();
     private Transaction currentTransaction;
 
 
-    protected String get(String variable){
+    /*
+    TreeMap guarantees log(n) worst-case time for get and containsKey operation. So, the get method below
+    with 2 containsKey and 2 get method will offer O(2 * log(n)) = O(log(n)) in the worst case
+     */
+    protected Integer get(String variable){
         if(currentTransaction != null && currentTransaction.getTempStore().containsKey(variable)){
-            return (String) currentTransaction.getTempStore().get(variable);
+            return currentTransaction.getTempStore().get(variable);
         }
         else if(store.containsKey(variable)){
-            return (String) store.get(variable);
+            return store.get(variable);
         }
         return null;
     }
 
-    protected void set(String variable, String value){
+    /*
+    TreeMap guarantees log(n) worst-case time for put operation. So, the put method below meets the requirements
+     */
+    protected void set(String variable, Integer value){
         if(currentTransaction != null){
             currentTransaction.getTempStore().put(variable,value);
+            if(currentTransaction.getValueIndex().containsKey(value)){
+                int count = currentTransaction.getValueIndex().get(value);
+                currentTransaction.getValueIndex().put(value,++count);
+            }
         }
         else {
             store.put(variable, value);
+            valueIndex.put(value, 1);
         }
     }
 
+    /*
+    TreeMap guarantees log(n) worst-case time for put operation. So, the unset method below meets the requirements
+     */
     protected void unset(String variable){
         if(currentTransaction != null){
             currentTransaction.getTempStore().put(variable,null);
@@ -43,25 +59,11 @@ public class DataStore {
         }
     }
 
-    protected int numEqualTo(String value){
-        int count = 0;
-        if(currentTransaction.getTempStore().containsValue(value)){
-            Set<String> keySet = currentTransaction.getTempStore().keySet();
-            for(String str : keySet) {
-                if(currentTransaction.getTempStore().get(str).equals(value)) {
-                    count++;
-                }
-            }
-        }
-        if(store.containsValue(value)) {
-            Set<String> keySet = store.keySet();
-            for(String str : keySet) {
-                if(store.get(str) == value && !currentTransaction.getTempStore().containsKey(str)) {
-                    count++;
-                }
-            }
-        }
-        return count;
+    /*
+
+    */
+    protected Integer numEqualTo(String value){
+        return null;
     }
 
     protected void begin(){
@@ -105,6 +107,17 @@ public class DataStore {
         }
         if(currentTransaction != null && currentTransaction.getTempStore().size() > 0) {
             store.putAll(currentTransaction.getTempStore());
+        }
+    }
+
+    private void updateIndex(Transaction transaction, Integer value){
+        if(valueIndex.containsKey(value)) {
+            Integer count = valueIndex.get(value);
+            count++;
+            valueIndex.put(value,count);
+        }
+        else {
+            valueIndex.put(value,0);
         }
     }
 }
