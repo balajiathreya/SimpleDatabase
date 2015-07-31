@@ -14,7 +14,7 @@ public class DataStore {
 
     /*
     TreeMap guarantees log(n) worst-case time for get and containsKey operation. So, the get method has a time
-    complexity of 2 * O(log(n)) = O(log(n))
+    complexity of O(log(n)) + O(log(n)) = O(log(n))
      */
     protected Integer get(String variable){
         if(currentTransaction != null && currentTransaction.getDataStore().containsKey(variable)) {
@@ -37,8 +37,8 @@ public class DataStore {
     }
 
     /*
-        This operation will take linear time which doesn't meet the requirement of log(N). :(
-        Time complexity for this method is O(N) + O(N)*O(log N) = O(N) in the worst case
+        This operation will take more than log(N) in worst case. :(
+        Time complexity for this method is O(N) + O(N)*O(log N) = O(N log N) in the worst case
     */
     protected int numEqualTo(Integer value){
         int count = 0;
