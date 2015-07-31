@@ -7,66 +7,57 @@ import java.util.*;
  */
 public class DataStore {
 
-    private TreeMap<String, Integer> store = new TreeMap();
+    private TreeMap<String, Integer> primaryDataStore = new TreeMap();
     private List<Transaction> transactions = new ArrayList<Transaction>();
     private Transaction currentTransaction;
 
 
     /*
     TreeMap guarantees log(n) worst-case time for get and containsKey operation. So, the get method has a time
-    complexity of O(2 * log(n)) = O(log(n))
+    complexity of 2 * O(log(n)) = O(log(n))
      */
     protected Integer get(String variable){
-        if(currentTransaction != null && currentTransaction.getTempStore().containsKey(variable)){
-            return currentTransaction.getTempStore().get(variable);
+        if(currentTransaction != null && currentTransaction.getDataStore().containsKey(variable)) {
+            return currentTransaction.getDataStore().get(variable);
         }
-        else if(store.containsKey(variable)){
-            return store.get(variable);
-        }
-        return null;
+        return primaryDataStore.get(variable);
     }
 
     /*
     TreeMap guarantees log(n) worst-case time for put operation. So, the put method below meets the requirement of
-    O(log(N))
+    O(log(N)) for set and unset operations
      */
     protected void set(String variable, Integer value){
         if(currentTransaction != null){
-            currentTransaction.getTempStore().put(variable,value);
+            currentTransaction.getDataStore().put(variable,value);
         }
         else {
-            store.put(variable, value);
-        }
-    }
-
-    /*
-    TreeMap guarantees log(n) worst-case time for put operation. So, the unset method below meets the requirement of
-    O(log(N))
-     */
-    protected void unset(String variable){
-        if(currentTransaction != null){
-            currentTransaction.getTempStore().put(variable,null);
-        }
-        else {
-            store.put(variable, null);
+            primaryDataStore.put(variable, value);
         }
     }
 
     /*
         This operation will take linear time which doesn't meet the requirement of log(N). :(
-        O(N) for containsValue * 2 + O(N) for looping through the keyset to get count.
-
+        Time complexity for this method is O(N) + O(N)*O(log N) = O(N) in the worst case
     */
     protected int numEqualTo(Integer value){
         int count = 0;
-        for(Map.Entry<String, Integer> entry : currentTransaction.getTempStore().entrySet()){
-            if(entry.getValue().equals(value)){
-                count++;
+        if(currentTransaction != null) {
+            for(Map.Entry<String, Integer> entry : currentTransaction.getDataStore().entrySet()){
+                if(value.equals(entry.getValue())){
+                    count++;
+                }
             }
         }
-        for(Map.Entry<String, Integer> entry : store.entrySet()){
-            if(entry.getValue().equals(value) && !currentTransaction.getTempStore().containsKey(entry.getKey())) {
-                count++;
+
+        for(Map.Entry<String, Integer> entry : primaryDataStore.entrySet()){
+            if(value.equals(entry.getValue())){
+                if(currentTransaction == null){
+                    count++;
+                }
+                else if(!currentTransaction.getDataStore().containsKey(entry.getKey())){
+                    count++;
+                }
             }
         }
         return count;
@@ -77,14 +68,14 @@ public class DataStore {
         if(currentTransaction != null){
             transactions.add(currentTransaction);
             Transaction newTransanction = new Transaction();
-            newTransanction.getTempStore().putAll(currentTransaction.getTempStore());   // inherit previous transaction values
+            newTransanction.getDataStore().putAll(currentTransaction.getDataStore());   // inherit previous transaction values
             currentTransaction = newTransanction;
         }
         // nested transaction
         else if(transactions.size() != 0) {
             Transaction mostRecentTransaction = transactions.get(transactions.size() - 1);
             Transaction currentTransaction = new Transaction();
-            currentTransaction.getTempStore().putAll(mostRecentTransaction.getTempStore());   // inherit previous transaction values
+            currentTransaction.getDataStore().putAll(mostRecentTransaction.getDataStore());   // inherit previous transaction values
         }
         // first transaction
         else {
@@ -110,15 +101,15 @@ public class DataStore {
         // nested transaction. commit all of them in order
         if(transactions != null && transactions.size() > 0){
             for(Transaction transaction: transactions) {
-                TreeMap temp = transaction.getTempStore();
-                store.putAll(temp);
+                TreeMap temp = transaction.getDataStore();
+                primaryDataStore.putAll(temp);
             }
             transactions = new ArrayList<Transaction>();
         }
         // commit the current transaction
-        if(currentTransaction != null && currentTransaction.getTempStore().size() > 0) {
-            store.putAll(currentTransaction.getTempStore());
-            currentTransaction = new Transaction();
+        if(currentTransaction != null && currentTransaction.getDataStore().size() > 0) {
+            primaryDataStore.putAll(currentTransaction.getDataStore());
+            currentTransaction = null;
         }
     }
 }

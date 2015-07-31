@@ -10,10 +10,10 @@ import java.util.TreeMap;
  */
 public class Transaction {
 
-    private TreeMap<String,Integer> tempStore = new TreeMap();
+    private TreeMap<String,Integer> dataStore = new TreeMap();
 
-    public TreeMap<String, Integer> getTempStore() {
-        return tempStore;
+    public TreeMap<String, Integer> getDataStore() {
+        return dataStore;
     }
 
 

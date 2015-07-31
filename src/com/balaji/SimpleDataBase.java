@@ -12,45 +12,61 @@ public class SimpleDataBase {
             String input = scanner.nextLine();
             String[] tokens = input.split("\\s");
             String command = tokens[0];
-            if("get".equalsIgnoreCase(command) && tokens.length == 2){
-                String variable = tokens[1];
-                System.out.println(dataStore.get(variable));
+            switch(tokens.length) {
+                case 1:
+                    if("end".equalsIgnoreCase(command)){
+                        System.exit(0);
+                    }
+                    else if("begin".equalsIgnoreCase(command)){
+                        dataStore.begin();
+                    }
+                    else if("rollback".equalsIgnoreCase(command)) {
+                        dataStore.rollback();
+                    }
+                    else if("commit".equalsIgnoreCase(command)) {
+                        dataStore.commit();
+                    }
+                    else {
+                        System.out.println("invalid command: " + input);
+                    }
+                    break;
+                case 2:
+                    if("get".equalsIgnoreCase(command)){
+                        String variable = tokens[1];
+                        System.out.println(dataStore.get(variable));
+                    }
+                    else if("unset".equalsIgnoreCase(command)){
+                        String variable = tokens[1];
+                        dataStore.set(variable, null);
+                    }
+                    else if("numequalto".equalsIgnoreCase(command)){
+                        String value = tokens[1];
+                        Integer val = getInt(value);
+                        if(val != null){
+                            System.out.println(dataStore.numEqualTo(val));
+                        }
+                    }
+                    else {
+                        System.out.println("invalid command: " + input);
+                    }
+                    break;
+                case 3:
+                    if("set".equalsIgnoreCase(command)){
+                        String variable = tokens[1];
+                        String value = tokens[2];
+                        Integer val = getInt(value);
+                        if(val != null){
+                            dataStore.set(variable, val);
+                        }
+                    }
+                    else {
+                        System.out.println("invalid command: " + input);
+                    }
+                    break;
+                default:
+                    System.out.println("invalid command: " + input);
+                    break;
             }
-            else if("set".equalsIgnoreCase(command) && tokens.length == 3){
-                String variable = tokens[1];
-                String value = tokens[2];
-                Integer val = getInt(value);
-                if(val != null){
-                    dataStore.set(variable, val);
-                }
-            }
-            else if("numequalto".equalsIgnoreCase(command) && tokens.length == 2){
-                String value = tokens[1];
-                Integer val = getInt(value);
-                if(val != null){
-                    System.out.println(dataStore.numEqualTo(val));
-                }
-            }
-            else if("unset".equalsIgnoreCase(command) && tokens.length == 2){
-                String variable = tokens[1];
-                dataStore.unset(variable);
-            }
-            else if("end".equalsIgnoreCase(command)){
-                System.exit(0);
-            }
-            else if("begin".equalsIgnoreCase(command)){
-                dataStore.begin();
-            }
-            else if("rollback".equalsIgnoreCase(command)) {
-                dataStore.rollback();
-            }
-            else if("commit".equalsIgnoreCase(command)) {
-                dataStore.commit();
-            }
-            else {
-                System.out.println("invalid command: " + input);
-            }
-
         }
     }
 
