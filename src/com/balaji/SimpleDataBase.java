@@ -12,26 +12,26 @@ public class SimpleDataBase {
             String input = scanner.nextLine();
             String[] tokens = input.split("\\s");
             String command = tokens[0];
-            if("get".equalsIgnoreCase(command)){
+            if("get".equalsIgnoreCase(command) && tokens.length == 2){
                 String variable = tokens[1];
                 System.out.println(dataStore.get(variable));
             }
-            else if("set".equalsIgnoreCase(command)){
+            else if("set".equalsIgnoreCase(command) && tokens.length == 3){
                 String variable = tokens[1];
                 String value = tokens[2];
                 Integer val = getInt(value);
                 if(val != null){
-                    dataStore.set(variable, value);
+                    dataStore.set(variable, val);
                 }
             }
-            else if("numequalto".equalsIgnoreCase(command)){
+            else if("numequalto".equalsIgnoreCase(command) && tokens.length == 2){
                 String value = tokens[1];
                 Integer val = getInt(value);
                 if(val != null){
-                    System.out.println(dataStore.numEqualTo(value));
+                    System.out.println(dataStore.numEqualTo(val));
                 }
             }
-            else if("unset".equalsIgnoreCase(command)){
+            else if("unset".equalsIgnoreCase(command) && tokens.length == 2){
                 String variable = tokens[1];
                 dataStore.unset(variable);
             }
@@ -47,6 +47,9 @@ public class SimpleDataBase {
             else if("commit".equalsIgnoreCase(command)) {
                 dataStore.commit();
             }
+            else {
+                System.out.println("invalid command: " + input);
+            }
 
         }
     }
@@ -56,6 +59,7 @@ public class SimpleDataBase {
             return Integer.parseInt(str);
         }
         catch (NumberFormatException ex){
+            System.out.println("invalid integer: " + str);
             return null;
         }
     }

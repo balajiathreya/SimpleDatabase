@@ -11,14 +11,13 @@ import java.util.TreeMap;
 public class DataStore {
 
     private TreeMap<String, Integer> store = new TreeMap();
-    private TreeMap<Integer, Integer> valueIndex = new TreeMap();
     private List<Transaction> transactions = new ArrayList<Transaction>();
     private Transaction currentTransaction;
 
 
     /*
-    TreeMap guarantees log(n) worst-case time for get and containsKey operation. So, the get method below
-    with 2 containsKey and 2 get method will offer O(2 * log(n)) = O(log(n)) in the worst case
+    TreeMap guarantees log(n) worst-case time for get and containsKey operation. So, the get method has a time
+    complexity of O(2 * log(n)) = O(log(n))
      */
     protected Integer get(String variable){
         if(currentTransaction != null && currentTransaction.getTempStore().containsKey(variable)){
@@ -31,24 +30,21 @@ public class DataStore {
     }
 
     /*
-    TreeMap guarantees log(n) worst-case time for put operation. So, the put method below meets the requirements
+    TreeMap guarantees log(n) worst-case time for put operation. So, the put method below meets the requirement of
+    O(log(N))
      */
     protected void set(String variable, Integer value){
         if(currentTransaction != null){
             currentTransaction.getTempStore().put(variable,value);
-            if(currentTransaction.getValueIndex().containsKey(value)){
-                int count = currentTransaction.getValueIndex().get(value);
-                currentTransaction.getValueIndex().put(value,++count);
-            }
         }
         else {
             store.put(variable, value);
-            valueIndex.put(value, 1);
         }
     }
 
     /*
-    TreeMap guarantees log(n) worst-case time for put operation. So, the unset method below meets the requirements
+    TreeMap guarantees log(n) worst-case time for put operation. So, the unset method below meets the requirement of
+    O(log(N))
      */
     protected void unset(String variable){
         if(currentTransaction != null){
@@ -60,35 +56,55 @@ public class DataStore {
     }
 
     /*
-
+        This operation will take linear time which doesn't meet the requirement of log(N). :(
     */
-    protected Integer numEqualTo(String value){
-        return null;
+    protected int numEqualTo(Integer value){
+        int count = 0;
+        if(currentTransaction.getTempStore().containsValue(value)){
+            Set<String> keySet = currentTransaction.getTempStore().keySet();
+            for(String str : keySet) {
+                if(currentTransaction.getTempStore().get(str).equals(value)) {
+                    count++;
+                }
+            }
+        }
+        if(store.containsValue(value)) {
+            Set<String> keySet = store.keySet();
+            for(String str : keySet) {
+                if(store.get(str).equals(value) && !currentTransaction.getTempStore().containsKey(str)) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     protected void begin(){
+        // second transaction
         if(currentTransaction != null){
             transactions.add(currentTransaction);
             Transaction newTransanction = new Transaction();
-            newTransanction.getTempStore().putAll(currentTransaction.getTempStore());
+            newTransanction.getTempStore().putAll(currentTransaction.getTempStore());   // inherit previous transaction values
             currentTransaction = newTransanction;
         }
+        // nested transaction
         else if(transactions.size() != 0) {
             Transaction mostRecentTransaction = transactions.get(transactions.size() - 1);
             Transaction currentTransaction = new Transaction();
-            currentTransaction.getTempStore().putAll(mostRecentTransaction.getTempStore());
+            currentTransaction.getTempStore().putAll(mostRecentTransaction.getTempStore());   // inherit previous transaction values
         }
+        // first transaction
         else {
             currentTransaction = new Transaction();
         }
     }
 
+    // simply delete the current transaction
     protected void rollback(){
         if(currentTransaction != null){
             if(transactions.size() == 0){
                 currentTransaction = null;
-            }
-            else {
+            } else {
                 currentTransaction = transactions.remove(transactions.size() - 1);
             }
         }
@@ -98,6 +114,7 @@ public class DataStore {
     }
 
     protected void commit(){
+        // nested transaction. commit all of them in order
         if(transactions != null && transactions.size() > 0){
             for(Transaction transaction: transactions) {
                 TreeMap temp = transaction.getTempStore();
@@ -105,19 +122,10 @@ public class DataStore {
             }
             transactions = new ArrayList<Transaction>();
         }
+        // commit the current transaction
         if(currentTransaction != null && currentTransaction.getTempStore().size() > 0) {
             store.putAll(currentTransaction.getTempStore());
-        }
-    }
-
-    private void updateIndex(Transaction transaction, Integer value){
-        if(valueIndex.containsKey(value)) {
-            Integer count = valueIndex.get(value);
-            count++;
-            valueIndex.put(value,count);
-        }
-        else {
-            valueIndex.put(value,0);
+            currentTransaction = new Transaction();
         }
     }
 }
