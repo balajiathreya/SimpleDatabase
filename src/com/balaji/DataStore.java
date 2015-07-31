@@ -1,9 +1,6 @@
 package com.balaji;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Created by baathreya on 7/27/15.
@@ -57,23 +54,19 @@ public class DataStore {
 
     /*
         This operation will take linear time which doesn't meet the requirement of log(N). :(
+        O(N) for containsValue * 2 + O(N) for looping through the keyset to get count.
+
     */
     protected int numEqualTo(Integer value){
         int count = 0;
-        if(currentTransaction.getTempStore().containsValue(value)){
-            Set<String> keySet = currentTransaction.getTempStore().keySet();
-            for(String str : keySet) {
-                if(currentTransaction.getTempStore().get(str).equals(value)) {
-                    count++;
-                }
+        for(Map.Entry<String, Integer> entry : currentTransaction.getTempStore().entrySet()){
+            if(entry.getValue().equals(value)){
+                count++;
             }
         }
-        if(store.containsValue(value)) {
-            Set<String> keySet = store.keySet();
-            for(String str : keySet) {
-                if(store.get(str).equals(value) && !currentTransaction.getTempStore().containsKey(str)) {
-                    count++;
-                }
+        for(Map.Entry<String, Integer> entry : store.entrySet()){
+            if(entry.getValue().equals(value) && !currentTransaction.getTempStore().containsKey(entry.getKey())) {
+                count++;
             }
         }
         return count;
