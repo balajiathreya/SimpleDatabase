@@ -26,36 +26,29 @@ public class Transaction {
         Integer curVal = dataStore.get(variable);
         // variable is not in transaction datastore
         if(curVal == null) {
-            if(newValue == null) {
-                if(curPrimaryVal != null){
-                    dataStore.put(variable, newValue);
-                    decrementCount(curPrimaryVal, primaryCountIndex);
-                }
+            if(newValue == null && curPrimaryVal != null) {
+                dataStore.put(variable, newValue);
+                decrementCount(curPrimaryVal, primaryCountIndex);
             }
             // variable is not in both transaction and primary datastore
             else if(curPrimaryVal == null){
                 dataStore.put(variable, newValue);
                 incrementCount(newValue, primaryCountIndex);
             }
-            // variable's new value is same as its existing value in primary datastore, do nothing
-            else if(newValue.equals(curPrimaryVal)){
-                return;
-            }
             // variable's new value is different from its existing value in primary datastore
-            else {
+            else if(!newValue.equals(curPrimaryVal)){
                 dataStore.put(variable, newValue);
                 decrementCount(curPrimaryVal, primaryCountIndex);
                 incrementCount(newValue, primaryCountIndex);
+                return;
             }
+            // variable's new value is same as its existing value in primary datastore, do nothing
         }
         // variable is in transaction datastore
         else {
             if(newValue == null) {
                 dataStore.put(variable, newValue);
                 decrementCount(curVal, primaryCountIndex);
-                if(curPrimaryVal != null){
-                    decrementCount(curPrimaryVal, primaryCountIndex);
-                }
             }
             // variable is in transaction and is different from the current value
             else if(!newValue.equals(curVal)){
